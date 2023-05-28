@@ -1,71 +1,62 @@
 
 # Target(s) to build
-TARGET_TESTAPP = app
+EXE = app
 
 # Sources
 PROJECT_HOME = .
-SRC_DIR = $(PROJECT_HOME)/.
 OBJ_DIR = $(PROJECT_HOME)/_obj
 
-SRCS_TESTAPP = $(SRC_DIR)/app.cpp \
-               $(SRC_DIR)/constraints.cpp
+SRCS = $(PROJECT_HOME)/app.cpp \
+       $(PROJECT_HOME)/constraints.cpp
+
+# Include directories
+INCS = -I$(PROJECT_HOME)
+
+# Libraries
+LIBS = 
+
+# Objective files to build
+OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS)))))
 
 # Detect operating system
 OS = $(shell uname -s)
 
-# Include directories
-INCS = 
-
-# Libraries
-ifeq "$(OS)" "Darwin"
-  LIBS = -ldl
-else
-  LIBS = -ldl -lrt
-endif
-
-# Objective files to build
-OBJS_LIB     = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS_LIB)))))
-OBJS_TESTAPP = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS_TESTAPP)))))
-
 # Compiler and linker to use
 ifeq "$(OS)" "Linux"
-  CC = /usr/local/geneva/packages/devtoolset-7/root/usr/bin/g++
-  CC_LIB_PATH = $(LD_LIBRARY_PATH):/usr/local-rhel7/geneva/packages/devtoolset-7/root/lib64
+  CC = g++
 else
   CC = g++
-  CC_LIB_PATH = $(LD_LIBRARY_PATH)
 endif
 
-CFLAGS = -std=c++1z -Wall -pthread
+CFLAGS = -std=c++17 -Wall
 LD = $(CC)
-LDFLAGS = -pthread
+LDFLAGS =
 
-#CFLAGS += -g
-CFLAGS += -D NDEBUG
+CFLAGS += -g
+#CFLAGS += -D NDEBUG
 
 # Build target(s)
-all: $(TARGET_TESTAPP)
+all: $(EXE)
 
-$(TARGET_TESTAPP): $(OBJS_TESTAPP)
-	export LD_LIBRARY_PATH=$(CC_LIB_PATH); $(LD) $(LDFLAGS) -o $(TARGET_TESTAPP) $(OBJS_TESTAPP) $(LIBS)
+$(EXE): $(OBJS)
+	$(LD) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
 # Compile source files
 # Add -MP to generate dependency list
 # Add -MMD to not include system headers
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp Makefile   
+$(OBJ_DIR)/%.o: $(PROJECT_HOME)/%.cpp Makefile   
 	-mkdir -p $(OBJ_DIR)
-	export LD_LIBRARY_PATH=$(CC_LIB_PATH); $(CC) -c -MP -MMD $(CFLAGS) $(INCS) -o $(OBJ_DIR)/$*.o $<
+	$(CC) -c -MP -MMD $(CFLAGS) $(INCS) -o $(OBJ_DIR)/$*.o $<
 	
 # Delete all intermediate files
 clean: 
-#	@echo OBJS_TESTAPP = $(OBJS_TESTAPP)
-	rm -rf $(TARGET_TESTAPP) $(OBJ_DIR) 
+#	@echo OBJS = $(OBJS)
+	rm -rf $(EXE) $(OBJ_DIR) 
 
 #
 # Read the dependency files.
 # Note: use '-' prefix to don't display error or warning
 # if include file do not exist (just remade it)
 #
--include $(OBJS_TESTAPP:.o=.d)
-
+-include $(OBJS:.o=.d)
 
