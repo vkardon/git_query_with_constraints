@@ -1,6 +1,7 @@
 
-# Target(s) to build
+# Executable to build
 EXE = app
+DEBUG = true
 
 # Sources
 PROJECT_HOME = .
@@ -18,7 +19,7 @@ LIBS =
 # Objective files to build
 OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SRCS)))))
 
-# Detect operating system
+# Get information about current kernel to distinguish between RedHat6 vs. Redhat7
 OS = $(shell uname -s)
 
 # Compiler and linker to use
@@ -28,30 +29,36 @@ else
   CC = g++
 endif
 
-CFLAGS = -std=c++17 -Wall
 LD = $(CC)
-LDFLAGS =
 
-CFLAGS += -g
-#CFLAGS += -D NDEBUG
+# Configure Debug or Release build
+CFLAGS = -std=gnu++17 -Wall -pthread
+LDFLAGS = -pthread
 
-# Build target(s)
-all: $(EXE)
+ifeq "$(DEBUG)" "true"
+  # Debug build
+  CFLAGS += -g
+else
+  # Release build (-s to remove all symbol table and relocation info)
+  CFLAGS += -O3 -DNDEBUG
+  LDFLAGS += -s
+endif
 
+# Build executable
 $(EXE): $(OBJS)
 	$(LD) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
 # Compile source files
 # Add -MP to generate dependency list
 # Add -MMD to not include system headers
-$(OBJ_DIR)/%.o: $(PROJECT_HOME)/%.cpp Makefile   
+$(OBJ_DIR)/%.o: $(PROJECT_HOME)/%.cpp Makefile
 	-mkdir -p $(OBJ_DIR)
 	$(CC) -c -MP -MMD $(CFLAGS) $(INCS) -o $(OBJ_DIR)/$*.o $<
 	
 # Delete all intermediate files
 clean: 
 #	@echo OBJS = $(OBJS)
-	rm -rf $(EXE) $(OBJ_DIR) 
+	rm -rf $(EXE) $(OBJ_DIR) core
 
 #
 # Read the dependency files.
